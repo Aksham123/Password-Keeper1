@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Password Keeper</title>
+<style>
+   </style>
+</head>
+<body>
+<div class="container">
+    <h1>Password Keeper</h1>
+    <p>Total Passwords: <span id="totalPasswords">0</span></p>
+    <label for="search">Search:</label>
+    <input type="text" id="search"><br><br>
+    <label for="title">Title:</label>
+    <input type="text" id="title">
+    <br>
+    <label for="password">Password:</label>
+    <input type="password" id="password"><br>
+    <button id="addButton">Add</button>
+
+    <h4>All Passwords</h4>
+    
+    <div id="passwordList"></div>
+</div>
+
+<script>
+    let passwords = [];
+
+    function addPassword() {
+        const titleInput = document.getElementById('title');
+        const passwordInput = document.getElementById('password');
+
+        const title = titleInput.value.trim();
+        const password = passwordInput.value.trim();
+
+        if (title === '' || password === '') {
+            alert('Please enter both title and password.');
+            return;
+        }
+
+        const passwordItem = { title, password };
+        savePassword(passwordItem);
+        titleInput.value = '';
+        passwordInput.value = '';
+    }
+
+    function savePassword(passwordItem) {
+        fetch('https://crudcrud.com/api/36bf14d6b1a84a02ab3f62e95a8391c6/PasswordKeeper', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(passwordItem)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to add password');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Password added:', data);
+            fetchPasswords();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to add password. Please try again.');
+        });
+    }
+
+    function fetchPasswords() {
+        fetch('https://crudcrud.com/api/36bf14d6b1a84a02ab3f62e95a8391c6/PasswordKeeper')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to fetch passwords');
+            }
+            return response.json();
+        })
+        .then(data => {
+            passwords = data;
+            console.log('Passwords fetched:', passwords);
+            displayPasswords();
+            updateTotalPasswords();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to fetch passwords. Please try again.');
+        });
+    }
+
+    function displayPasswords() {
+        const passwordListContainer = document.getElementById('passwordList');
+        passwordListContainer.innerHTML = '';
+
+        passwords.forEach((passwordItem, index) => {
+            const div = document.createElement('div');
+            div.classList.add('password-item');
+            div.innerHTML = `<strong>${passwordItem.title}</strong>: ${passwordItem.password} <button onclick="editPassword(${index})">Edit</button> <button onclick="deletePassword(${index})">Delete</button>`;
+            passwordListContainer.appendChild(div);
+        });
+    }
+
+    function updateTotalPasswords() {
+        document.getElementById('totalPasswords').textContent = passwords.length;
+    }
+
+    function searchPasswords() {
+        const searchTerm = document.getElementById('search').value.toLowerCase();
+        const filteredPasswords = passwords.filter(passwordItem => {
+            return passwordItem.title.toLowerCase().includes(searchTerm) ||
+                passwordItem.password.toLowerCase().includes(searchTerm);
+        });
+        displayFilteredPasswords(filteredPasswords);
+    }
+
+    function displayFilteredPasswords(filteredPasswords) {
+        const passwordListContainer = document.getElementById('passwordList');
+        passwordListContainer.innerHTML = '';
+
+        filteredPasswords.forEach((passwordItem, index) => {
+            const div = document.createElement('div');
+            div.classList.add('password-item');
+            div.innerHTML = `<strong>${passwordItem.title}</strong>: ${passwordItem.password} <button onclick="editPassword(${index})">Edit</button> <button onclick="deletePassword(${index})">Delete</button>`;
+            passwordListContainer.appendChild(div);
+        });
+    }
+
+    function editPassword(index) {
+        const newPassword = prompt("Enter the new password:");
+        if (newPassword !== null) {
+            passwords[index].password = newPassword;
+const passwordItem1 = { title: passwords[index].title, password: passwords[index].password };
+const id=passwords[index]._id;
+           // savePassword(passwords[index]);
+           fetch(`https://crudcrud.com/api/36bf14d6b1a84a02ab3f62e95a8391c6/PasswordKeeper/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(passwordItem1)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to add password');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Password added:', data);
+            
+        })
+        .catch(error => {
+            console.error('Error:', error);
+           // alert('Failed to add password. Please try again.');
+        });
+        fetchPasswords();
+    }
+        }
+    
+
+    function deletePassword(index) {
+    const id = passwords[index]._id;
+    console.log('Deleting password with ID:', id);
+    
+    fetch(`https://crudcrud.com/api/36bf14d6b1a84a02ab3f62e95a8391c6/PasswordKeeper/${id}`, {
+        method: 'DELETE'
+    })
+    .then(response => {
+        if (!response.ok) {
+            console.error('Failed to delete password. Response status:', response.status);
+            throw new Error('Failed to delete password');
+        }
+        console.log('Password deleted successfully. Response status:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('Password deleted:', data);
+        //fetchPasswords();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+       // alert('Failed to delete password. Please try again.');
+    });
+    fetchPasswords();
+}
+
+    document.getElementById('addButton').addEventListener('click', addPassword);
+    document.getElementById('search').addEventListener('input', searchPasswords);
+
+    fetchPasswords(); // Fetch passwords on page load
+</script>
+
+</body>
+</html>
